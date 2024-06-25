@@ -13,7 +13,7 @@ RUN pip3 install pytest
 
 WORKDIR /app
 
-COPY generate_billable_sessions.py /app/
-COPY test_generate_billable_sessions.py /app/
+COPY ../scripts/generate_billable_sessions.py /app/
+COPY ../tests/test_generate_billable_sessions.py /app/
 
 CMD ["/bin/bash"]

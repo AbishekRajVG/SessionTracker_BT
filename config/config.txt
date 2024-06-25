@@ -1,0 +1,2 @@
+export DOCKER_IMAGE="vgsabishekraj/session-tracker-bt"
+export IMAGE_VER="v1.0"
