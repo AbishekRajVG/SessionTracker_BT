@@ -1,7 +1,7 @@
 
 # Fair-Billing | Fair Billable Session Report Generator | BT Technical Assessment
 
-This Github Repository tracks the development of a Python tool to generate fair billable session reports. We also have a supporting config-driven Bash driver sript and corresponding pytest unit tests.
+This Github Repository tracks the development of a Python tool to generate fair billable session reports. We also have a supporting config-driven Bash driver script and corresponding pytest unit tests.
 
 
 ## Installation & Execution Instructions
@@ -23,7 +23,7 @@ Step 2: Use the driver script to operate this SessionTracker tool
 
 Step 3: Prepare the docker container
 
-> **Pre-Requisite:** Please ensure Docker daemon is running and user is logged in using `docker login -u <USER>`
+> **Pre-Requisite:** Please ensure the Docker daemon is running and the user is logged in using `docker login -u <USER>`
 
 
 Set the required docker Image name and version in the config file
@@ -63,7 +63,7 @@ Step 5: Finally, Generate Fair Billable Session Reports
 
   
 
-## Intution & Approach to the Solution
+## Intuition & Approach to the Solution
 
   
 ### Primary Goal
@@ -93,25 +93,25 @@ Step 5: Finally, Generate Fair Billable Session Reports
     
     Case 1.2: New Customer but no matching start, Anomaly 1
     
-    Case 2.1: Existing Customer normal Start
+    Case 2.1: Existing Customer Normal Start
     
     Case 2.2: Existing Customer but no matching start, Anomaly 2
     
-    Case 2.3: Apart from per line records, we have to also handle the edge case when a Customer is still active and has not Ended its session (after last known log)
+    Case 2.3: Apart from per-line records, we also have to handle the edge case when a Customer is still active and has not Ended its session (after last known log)
     
 - The prompt gives clear assumptions to overcome and suit each of these 5 scenarios
 
 ### Secondary Goal
 
 - Make the app as light-weight as possible - meaning peak efficiency in both time and space
-- Code coverage through pytest unit testcases for every function
+- Code coverage through pytest unit test cases for every function
 - Containerised application - Since we have just a single easy tool, single container and no need of compose or kube orchestration
 - Code Organisation
     - A primary Python tool to generate fair billable session reports. Break down into simple atomic functions
     - A corresponding pytest script to achieve high code coverage for all functions of the main tool
     - A config-driven driver script in Bash which gives us Command Line options to operate this tool
         - Config file which hosts docker image name and image version
-        - BUILD docker images locally or PULL pre built docker image
+        - BUILD docker images locally or PULL pre-built docker image
         - run pyTest unit test cases
         - Generate Fair Billable Session Reports passing source file as a CMD line argument
 
@@ -123,10 +123,10 @@ Step 5: Finally, Generate Fair Billable Session Reports
 - A slightly better and more modular approach is Defining a class for Session (inheriting from) a class for customer - Let each session object has details per session record in logs. —> Impractical and complex
 - The most obvious way to track enclosing sessions is by using a `Stack`  Data Structure
 - The better way is to have only a single class for Customer
-    - the customer object saves a `session stack` which persists START timestamps in LIFO order
-    - we then map the earliest END timestamp to the latest START timestamp - essentially pop() from stack
-- Customer class saves `active customer list` and `customer dict` - at the class level. Basically all customers should be able to know more about other active customers - for the given scenario.
-- HH:MM:SS time to epoch timestamps - easier to calculate the time difference in seconds
+    - the customer object saves a `session stack` which persists START timestamps in the LIFO order
+    - we then map the earliest END timestamp to the latest START timestamp - essentially pop() from the stack
+The customer class saves the `active customer list` and `customer dict` at the class level. For the given scenario, all customers should be able to learn more about other active customers.
+- `HH:MM:SS` time to epoch timestamps - easier to calculate the time difference in seconds
 
 ---
 
