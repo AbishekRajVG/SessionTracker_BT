@@ -1,8 +1,12 @@
 #/bin/bash
 
-# read config file
+############################################################
+# config-driven shell script with cmd line options         #
+############################################################
+
 relative_path="$(dirname "$0")"
 
+# read config file
 source ${relative_path}/../config/config.txt
 
 get_help()
@@ -20,12 +24,6 @@ get_help()
     echo " -h           Print this Help."
     echo
 }
-
-############################################################
-############################################################
-# Main program                                             #
-############################################################
-############################################################
 
 log_file=""
 
@@ -46,7 +44,7 @@ run_generate_billable_sessions(){
     eval "docker run -v ${log_file}:/app/session.log -t ${DOCKER_IMAGE}:${IMAGE_VER} python3 /app/generate_billable_sessions.py /app/session.log"
 }
 
-# Get the options
+
 while getopts ":hubtf:" option; do
     case $option in
         h)  get_help
