@@ -1,23 +1,23 @@
 
+# Fair-Billing | Fair Billable Session Report Generator | BT Technical Assessment
+
+This Github Repository tracks the development of a Python tool to generate fair billable session reports. We also have a supporting config-driven Bash driver sript and corresponding pytest unit tests.
+
+
 ## Installation & Execution Instructions
 
-  
 
 Step 1: Shallow-clone this Git Repository
 
 ```
-
 git clone https://github.com/AbishekRajVG/SessionTracker_BT --depth 1 && cd SessionTracker_BT
-
 ```
 
 
 Step 2: Use the driver script to operate this SessionTracker tool
 
 ```
-
 ./scripts/driver.sh -h
-
 ```
 
 
@@ -29,33 +29,25 @@ Step 3: Prepare the docker container
 Set the required docker Image name and version in the config file
 
 ```
-
 vim config/config.txt
-
 ```
 
 Step 3.1: [Recommended] Pull the pre-built docker-image from Docker-Hub
 
 ```
-
 ./scripts/driver.sh -u
-
 ```
 
 Step 3.2: [Alternatively] Build the docker image locally
 
 ```
-
 ./scripts/driver.sh -b
-
 ```
 
 Step 4: Execute pytest Unit Test cases
 
 ```
-
 ./scripts/driver.sh -t
-
 ```
 
 
@@ -64,12 +56,8 @@ Step 5: Finally, Generate Fair Billable Session Reports
 > **Note:** A fully-qualified file path must be provided
 
 ```
-
 ./scripts/driver.sh -f $PWD/input_sample_sessions.txt
-
 ```
-
-  
 
 ---
 
@@ -78,132 +66,142 @@ Step 5: Finally, Generate Fair Billable Session Reports
 ## Intution & Approach to the Solution
 
   
+### Primary Goal
 
-<COMING>
+- The primary goal of this tool is to generate refined records of session information to fairly bill customers.
+- Our source data is a haphazard Log file, and we’re to primarily extract valid logs of the format`TIMESTAMP CUSTOMER_NAME Start/End`
+    
+    ```bash
+      14:02:03 ALICE99 Start
+      14:02:05 CHARLIE End
+      14:02:34 ALICE99 End
+      14:02:58 ALICE99 Start
+      14:03:02 CHARLIE Start
+      14:03:33 ALICE99 Start
+      14:03:35 ALICE99 End
+      14:03:37 CHARLIE End
+      14:04:05 ALICE99 End
+      14:04:23 ALICE99 End
+      14:04:41 CHARLIE Start
+    ```
+    
+- Anomalies: There maybe END session entries without a corresponding START or Viseversa.
+- The fair billable report must contain `user name`, `minimum possible sessions` , `minimum possible total session time`
+- Logically, all valid session records will fall under one of these 5 scenarios:
+    
+    Case 1.1: New Customer normal start
+    
+    Case 1.2: New Customer but no matching start, Anomaly 1
+    
+    Case 2.1: Existing Customer normal Start
+    
+    Case 2.2: Existing Customer but no matching start, Anomaly 2
+    
+    Case 2.3: Apart from per line records, we have to also handle the edge case when a Customer is still active and has not Ended its session (after last known log)
+    
+- The prompt gives clear assumptions to overcome and suit each of these 5 scenarios
 
-  
-  
+### Secondary Goal
+
+- Make the app as light-weight as possible - meaning peak efficiency in both time and space
+- Code coverage through pytest unit testcases for every function
+- Containerised application - Since we have just a single easy tool, single container and no need of compose or kube orchestration
+- Code Organisation
+    - A primary Python tool to generate fair billable session reports. Break down into simple atomic functions
+    - A corresponding pytest script to achieve high code coverage for all functions of the main tool
+    - A config-driven driver script in Bash which gives us Command Line options to operate this tool
+        - Config file which hosts docker image name and image version
+        - BUILD docker images locally or PULL pre built docker image
+        - run pyTest unit test cases
+        - Generate Fair Billable Session Reports passing source file as a CMD line argument
 
 ---
 
-  
+### My Approach
 
-## Assessment Prompt
+- A **layman** approach is to have two dictionaries. One for the number of sessions and another for the total session time
+- A slightly better and more modular approach is Defining a class for Session (inheriting from) a class for customer - Let each session object has details per session record in logs. —> Impractical and complex
+- The most obvious way to track enclosing sessions is by using a `Stack`  Data Structure
+- The better way is to have only a single class for Customer
+    - the customer object saves a `session stack` which persists START timestamps in LIFO order
+    - we then map the earliest END timestamp to the latest START timestamp - essentially pop() from stack
+- Customer class saves `active customer list` and `customer dict` - at the class level. Basically all customers should be able to know more about other active customers - for the given scenario.
+- HH:MM:SS time to epoch timestamps - easier to calculate the time difference in seconds
 
-  
+---
 
-# Fair billing
+## Final Output from local test execution:
 
-  
+1. Perform a shallow clone from Git
+2. Driver tool help
+```
+vgsabishekraj@simple-linux-vm:~/SessionTracker_BT$ ./scripts/driver.sh -h
+This is the main driver script which drives this fair bill tool
 
-You work for a hosted application provider which charges for the use of its application by the duration of sessions. There is a charge
+Syntax: ./driver.sh [-h] [-u] [-b] [-t] [-f <source file path>]
+options:
 
-per second of usage. The usage data comes from a log file that lists the time at which a session starts or stops (in the format
+ -b           Build docker image locally
+ -u           Pull docker image from remote Docker Hub
+ -f FILE      Execute generate_billable_sessions tool with source log file
+ -t           Run pytest testcases for the tool
+ -h           Print this Help.
+```
+3. Prepare the docker container
 
-HH:MM:SS), the name of the user (which is a single alphanumeric string, of arbitrary length) and whether this is the start or end of
+    3.1. Pull pre-built docker image from docker-hub
+    ```
+    vgsabishekraj@simple-linux-vm:~/SessionTracker_BT$ ./scripts/driver.sh -u
+    docker.io/vgsabishekraj/session-tracker-bt:v1.0
+    vgsabishekraj/session-tracker-bt   v1.0      a7e3b5f704b2   19 hours ago   359MB
+    ```
+    
+    3.2. Build the docker image locally
+    
+    ```
+    vgsabishekraj@simple-linux-vm:~/SessionTracker_BT$ ./scripts/driver.sh -b
+    [+] Building 1.7s (12/12) FINISHED                                                                                                                           docker:desktop-linux
+     => [internal] load build definition from Dockerfile                                                                                                                         0.0s
+     => => transferring dockerfile: 449B                                                                                                                                         0.0s
+     => [internal] load .dockerignore                                                                                                                                            0.0s
+     => => transferring context: 2B                                                                                                                                              0.0s
+     => [internal] load metadata for docker.io/library/ubuntu:20.04                                                                                                              1.6s
+     => [auth] library/ubuntu:pull token for registry-1.docker.io                                                                                                                0.0s
+     => [1/6] FROM docker.io/library/ubuntu:20.04@sha256:0b897358ff6624825fb50d20ffb605ab0eaea77ced0adb8c6a4b756513dec6fc                                                        0.0s
+     => [internal] load build context                                                                                                                                            0.0s
+     => => transferring context: 319B                                                                                                                                            0.0s
+     => CACHED [2/6] RUN apt-get update     && apt-get install -y         python3         python3-pip         bash         && rm -rf /var/lib/apt/lists/*                        0.0s
+     => CACHED [3/6] RUN pip3 install pytest                                                                                                                                     0.0s
+     => CACHED [4/6] WORKDIR /app                                                                                                                                                0.0s
+     => CACHED [5/6] COPY ../scripts/generate_billable_sessions.py /app/                                                                                                         0.0s
+     => CACHED [6/6] COPY ../tests/test_generate_billable_sessions.py /app/                                                                                                      0.0s
+     => exporting to image                                                                                                                                                       0.0s
+     => => exporting layers                                                                                                                                                      0.0s
+     => => writing image sha256:fc70df9080524fbd29005147babf3e60344277aeac551f305a234bc22f736d88                                                                                 0.0s
+     => => naming to docker.io/library/sess-tracker                                                                                                                              0.0s
+     => => naming to docker.io/vgsabishekraj/session-tracker-bt:v1.0                                                                                                             0.0s
+    ```
+    
+4. Execute pytest Unit Test cases
+    
+    ```
+    vgsabishekraj@simple-linux-vm:~/SessionTracker_BT$ ./scripts/driver.sh -t
+    vgsabishekraj/session-tracker-bt:v1.0
+    ============================================================================== test session starts ===============================================================================
+    platform linux -- Python 3.8.10, pytest-8.2.2, pluggy-1.5.0
+    rootdir: /app
+    collected 13 items                                                                                                                                                               
+    
+    test_generate_billable_sessions.py .............                                                                                                                           [100%]
+    
+    =============================================================================== 13 passed in 0.04s ===============================================================================
+    ```
+    
 
-the session, like this:
-
-  
-
-14 : 02 : 03 ALICE 99 Start
-
-14 : 02 : 05 CHARLIE End
-
-14 : 02 : 34 ALICE 99 End
-
-14 : 02 : 58 ALICE 99 Start
-
-14 : 03 : 02 CHARLIE Start
-
-14 : 03 : 33 ALICE 99 Start
-
-14 : 03 : 35 ALICE 99 End
-
-14 : 03 : 37 CHARLIE End
-
-14 : 04 : 05 ALICE 99 End
-
-14 : 04 : 23 ALICE 99 End
-
-14 : 04 : 41 CHARLIE Start
-
-  
-
-Unfortunately, the developer of the application omitted some vital information from the log file. There is no indicator which start and
-
-end lines are paired together. Even more unfortunately, the log files are re-written on a regular basis, so sessions may overlap the time
-
-boundaries of the log file. In other words, there may be “End” entries for sessions that were already in progress when the log file
-
-started, which will have no preceding “Start”. Similarly, when the log files are retrieved, there may be sessions still in progress that
-
-have a “Start” but no “End”.
-
-  
-
-Your task is to take the log file and to print out a report of the users, the number of sessions, and the minimum possible total
-
-duration of their sessions in seconds that is consistent with the data in the file. As you can see in the example above, a user can also
-
-have more than one session active concurrently. Where there is an “End” with no possible matching start, the start time should be
-
-assumed to be the earliest time of any record in the file. Where there is a “Start” with no possible matching “End”, the end time
-
-should be assumed to be the latest time of any record in the file. So, for a file containing only these records:
-
-  
-
-14 : 02 : 03 ALICE 99 Start
-
-14 : 02 : 05 CHARLIE End
-
-14 : 02 : 34 ALICE 99 End
-
-  
-
-the start time for CHARLIE's record should be assumed to be the earliest time in the file, i.e. 14 : 02 : 03. Similarly for the first example
-
-above:
-
-  
-
-...
-
-14 : 04 : 05 ALICE 99 End
-
-14 : 04 : 23 ALICE 99 End
-
-14 : 04 : 41 CHARLIE Start
-
-  
-
-the last record is a “Start” and there are no later records at all so CHARLIE's last session will be considered to have finished at
-
-14 : 04 : 41 , i.e. it will be 0 seconds in duration.
-
-  
-
-Putting this all together, the results for the original data shown above would be as follows (name, sessions and total time):
-
-  
-
-ALICE 99 4 240
-
-CHARLIE 3 37
-
-  
-
-Your program should take a single command line parameter, which will be the path to the data file to read. You can assume that the
-
-data in the input will be correctly ordered chronologically, and that all records in the file will be from within a single day (i.e. they will
-
-not span midnight).
-
-  
-
-Finally, you should note that, as with most log files, there may be other invalid or irrelevant data within the file. Therefore, any lines
-
-that do not contain a valid time-stamp, username and a Start or End marker should be silently ignored and not included in any
-
-calculations.
+5.  Finally, Generate Fair Billable Session Reports
+    
+    ```
+    vgsabishekraj@simple-linux-vm:~/SessionTracker_BT$ ./scripts/driver.sh -f /Users/abishek/Downloads/bt_test/SessionTracker_BT/input_sample_sessions.txt
+    ALICE99 4 240
+    CHARLIE 3 37
+    ```
