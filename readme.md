@@ -7,7 +7,7 @@ Step 1: Shallow-clone this Git Repository
 
 ```
 
-git clone https://github.com/AbishekRajVG/SessionTracker_BT --depth 1
+git clone https://github.com/AbishekRajVG/SessionTracker_BT --depth 1 && cd SessionTracker_BT
 
 ```
 
@@ -65,7 +65,7 @@ Step 5: Finally, Generate Fair Billable Session Reports
 
 ```
 
-./scripts/driver.sh -f $PWD/input_sample_sessions.log
+./scripts/driver.sh -f $PWD/input_sample_sessions.txt
 
 ```
 
